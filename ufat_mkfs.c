@@ -32,12 +32,15 @@
  */
 
 #include <string.h>
+#include <assert.h>
+
 #include "ufat.h"
 #include "ufat_internal.h"
 
 #define BACKUP_SECTOR	6
 #define FSINFO_SECTOR	1
 #define MEDIA_DISK	0xf8
+#define BUF_BLOCK_SIZE 1024
 
 struct fs_layout {
 	unsigned int	log2_sector_size;
@@ -183,9 +186,10 @@ static int erase_blocks(struct ufat_device *dev, ufat_block_t start,
 			ufat_block_t count)
 {
 	const unsigned int block_size = 1 << dev->log2_block_size;
-	uint8_t buf[block_size];
+	assert(BUF_BLOCK_SIZE >= block_size);
+	uint8_t buf[BUF_BLOCK_SIZE];
 
-	memset(buf, 0, sizeof(buf));
+	memset(buf, 0, block_size);
 	for (ufat_block_t i = 0; i < count; i++)
 		if (dev->write(dev, start + i, 1, buf) < 0)
 			return -UFAT_ERR_IO;
@@ -210,7 +214,8 @@ static int write_bpb(struct ufat_device *dev, const struct fs_layout *fl)
 	const unsigned int log2_bps =
 		fl->log2_sector_size - dev->log2_block_size;
 	const unsigned int block_size = 1 << dev->log2_block_size;
-	uint8_t buf[block_size];
+	assert(BUF_BLOCK_SIZE >= block_size);
+	uint8_t buf[BUF_BLOCK_SIZE];
 
 	switch (fl->type) {
 	case UFAT_TYPE_FAT12:
@@ -226,7 +231,7 @@ static int write_bpb(struct ufat_device *dev, const struct fs_layout *fl)
 		break;
 	}
 
-	memset(buf, 0, sizeof(buf));
+	memset(buf, 0, block_size);
 
 	/* Boot sector signature */
 	memcpy(buf, boot_header, sizeof(boot_header));
@@ -277,9 +282,11 @@ static int write_fsinfo(struct ufat_device *dev, const struct fs_layout *fl)
 	const unsigned int log2_bps =
 		fl->log2_sector_size - dev->log2_block_size;
 	const unsigned int block_size = 1 << dev->log2_block_size;
-	uint8_t buf[block_size];
+	
+	assert(BUF_BLOCK_SIZE >= block_size);
+	uint8_t buf[BUF_BLOCK_SIZE];
 
-	memset(buf, 0, sizeof(buf));
+	memset(buf, 0, block_size);
 	w32(buf + 0x000, 0x41615252); /* FSI_LeadSig */
 	w32(buf + 0x1e4, 0x61417272); /* FSI_StrucSig */
 	w32(buf + 0x1e8, fl->clusters - 3); /* FSI_Free_Count */
@@ -305,8 +312,9 @@ static int init_fat12(struct ufat_device *dev, const struct fs_layout *fl)
 	ufat_block_t i;
 	ufat_block_t block;
 
+	assert(BUF_BLOCK_SIZE >= block_size);
 	for (i = 0, block = 0; i < fl->fat_blocks * 2; i++, block++) {
-		uint8_t buf[block_size];
+		uint8_t buf[BUF_BLOCK_SIZE];
 		unsigned int j;
 
 		if (block == fl->fat_blocks) {
@@ -353,8 +361,9 @@ static int init_fat16(struct ufat_device *dev, const struct fs_layout *fl)
 	ufat_block_t block;
 	ufat_cluster_t c;
 
+	assert(BUF_BLOCK_SIZE >= block_size);
 	for (i = 0, block = 0, c = 0; i < fl->fat_blocks * 2; i++, block++) {
-		uint8_t buf[block_size];
+		uint8_t buf[BUF_BLOCK_SIZE];
 		unsigned int j;
 
 		if (block == fl->fat_blocks) {
@@ -390,8 +399,9 @@ static int init_fat32(struct ufat_device *dev, const struct fs_layout *fl)
 	ufat_block_t block;
 	ufat_cluster_t c;
 
+	assert(BUF_BLOCK_SIZE >= block_size);
 	for (i = 0, block = 0, c = 0; i < fl->fat_blocks * 2; i++, block++) {
-		uint8_t buf[block_size];
+		uint8_t buf[BUF_BLOCK_SIZE];
 		unsigned int j;
 
 		if (block == fl->fat_blocks) {

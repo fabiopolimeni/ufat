@@ -30,16 +30,16 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-CC ?= gcc
-UFAT_CFLAGS = -O1 -Wall -Wextra -Wshadow -Wpedantic -ggdb
+COMPILER ?= clang
+UFAT_CFLAGS = -O1 -Wall -Wextra -Wshadow -Wpedantic -std=c11 -v
 
 all: ufat
 
 ufat: ufat.o ufat_dir.o ufat_file.o ufat_ent.o ufat_mkfs.o main.o
-	$(CC) -o $@ $^
+	$(COMPILER) -o $@ $^
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(UFAT_CFLAGS) -o $*.o -c $*.c
+	$(COMPILER) $(UFAT_CFLAGS) -c $< -o $@
 
 clean:
 	rm -f *.o

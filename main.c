@@ -34,11 +34,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <getopt.h>
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <sys/time.h>
+
+#include "ya_getopt.h"
 #include "ufat.h"
 
 struct command;
@@ -416,7 +416,7 @@ static int cmd_read(struct ufat *uf, const struct options *opt)
 		int len;
 
 		if (opt->flags & OPTION_RANDOMIZE)
-			req_size = random() % sizeof(buf) + 1;
+			req_size = rand() % sizeof(buf) + 1;
 
 		len = ufat_file_read(&file, buf, req_size);
 		if (len < 0) {
@@ -498,7 +498,7 @@ static int cmd_write(struct ufat *uf, const struct options *opt)
 		int len;
 
 		if (opt->flags & OPTION_RANDOMIZE)
-			req_size = random() % sizeof(buf) + 1;
+			req_size = rand() % sizeof(buf) + 1;
 
 		len = fread(buf, 1, req_size, in);
 		if (ferror(stdin)) {
@@ -1138,7 +1138,7 @@ int main(int argc, char **argv)
 	if (parse_options(argc, argv, &opt) < 0)
 		return -1;
 
-	srandom(opt.seed);
+	srand(opt.seed);
 
 	if (file_device_open(&dev, opt.filename, opt.log2_bs,
 			     opt.flags & OPTION_MKFS) < 0)
